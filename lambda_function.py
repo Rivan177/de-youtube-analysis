@@ -15,7 +15,6 @@ def lambda_handler(event, context):
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = urllib.parse.unquote_plus(event['Records'][0]['s3']['object']['key'],
                                     encoding='utf-8')
-
     try:
         # Creating DF from content
         df_raw = wr.s3.read_json('s3://{}/{}'.format(bucket, key))
@@ -23,7 +22,7 @@ def lambda_handler(event, context):
         # Extract required columns:
         df_step_1 = pd.json_normalize(df_raw['items'])
 
-        # Write to S3
+        # Write to S3 in parquet format
         wr_response = wr.s3.to_parquet(
             df=df_step_1,
             path=os_input_s3_cleansed_layer,
@@ -34,6 +33,7 @@ def lambda_handler(event, context):
         )
 
         return wr_response
+
     except Exception as e:
         print(e)
         print('Error getting object {} from bucket {}. Make sure they exist \
